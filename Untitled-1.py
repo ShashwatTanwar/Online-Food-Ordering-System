@@ -1,10 +1,12 @@
+import random
+
 class User:
-    def _init_(self, username, password):
+    def __init__(self, username, password):
         self.username = username
         self.password = password
 
 class FoodItem:
-    def _init_(self, item_id, name, price):
+    def __init__(self, item_id, name, price):
         self.item_id = item_id
         self.name = name
         self.price = price
@@ -19,72 +21,36 @@ class FoodItem:
         print("Thank you for your feedback!")
 
 class Payment:
-    def _init_(self, user, total_amount):
-        self.user = user
-        self.total_amount = total_amount
-        self.payment_status = "Pending"
-        self.credit_card_number = None
+    def process_payment(self, total_amount):
+        credit_card_number = input("Enter your credit card number: ")
+        expiration_date = input("Enter the expiration date (MM/YY): ")
+        cvv = input("Enter the CVV: ")
 
-    def process_payment(self):
-        self.credit_card_number = input("Enter your credit card number: ")
-        # In a real-world scenario, you would use a secure payment gateway to process the payment
-        # Here, we'll just assume the payment is successful for demonstration purposes
-        print("Payment successful!")
-        self.payment_status = "Completed"
-
+        # Simulate payment processing (in a real system, you'd use a payment gateway)
+        transaction_id = random.randint(100000, 999999)
+        print(f"Payment successful! Transaction ID: {transaction_id}")
+        return transaction_id
 
 class Order:
-    def _init_(self, user, item, quantity):
+    def __init__(self, user, item, quantity):
         self.user = user
         self.item = item
         self.quantity = quantity
         self.status = "Processing"
-        self.payment = None
-
-    def make_payment(self):
-        total_amount = self.item.price * self.quantity
-        total_amount = apply_discount(total_amount)
-        delivery_cost = choose_delivery_option()
-        total_amount += delivery_cost
-
-        payment = Payment(self.user, total_amount)
-        payment.process_payment()
-        self.payment = payment
-
-        print("Order placed successfully!")
-        self.status = "Completed"
-
-
-def apply_discount(total_amount):
-    discount_code = input("Enter discount code (if any): ")
-    discount_amount = 80
-    discounted_total = max(0, total_amount - discount_amount)
-    print(f"Discount applied: ${discount_amount:.2f}")
-    return discounted_total
-
-def choose_delivery_option():
-    delivery_option = input("Choose delivery option (1. Standard, 2. Express): ")
-    delivery_cost = 0
-
-    if delivery_option == '1':
-        delivery_cost = 39  # Standard delivery cost
-    elif delivery_option == '2':
-        delivery_cost = 69  # Express delivery cost
-    else:
-        print("Invalid delivery option. Using standard delivery.")
-
-    return delivery_cost
+        self.transaction_id = None  # To store the transaction ID after payment
 
 # Dummy data for users, menu, and orders
 users = [User("user1", "password1"), User("user2", "password2")]
 menu = [
     FoodItem(1, 'Pizza', 399),
     FoodItem(2, 'Burger', 199),
-    FoodItem(3, 'Pasta', 89),
-    FoodItem(4, 'Salad', 49),
-    FoodItem(5, 'Chicken Wings', 399),
-    FoodItem(6, 'Sushi Roll', 1099),
-    FoodItem(7, 'Steak', 1999),
+    FoodItem(3, 'Pasta', 299),
+    FoodItem(4, 'Salad', 149),
+    FoodItem(5, 'Sushi', 499),
+    FoodItem(6, 'Chicken Wings', 249),
+    FoodItem(7, 'Ice Cream', 129),
+    FoodItem(8, 'Sandwich', 179),
+    # Add more items as needed
 ]
 orders = []
 
@@ -107,6 +73,28 @@ def display_menu():
     for item in menu:
         print(f"{item.item_id}. {item.name} - Rs.{item.price}")
 
+def apply_discount(total_amount):
+    discount_code = input("Enter discount code (if any): ")
+    # Implement logic to apply discounts based on the discount code
+    # For simplicity, let's assume a fixed discount for demonstration purposes
+    discount_amount = 69
+    discounted_total = max(0, total_amount - discount_amount)
+    print(f"Discount applied: Rs.{discount_amount:.2f}")
+    return discounted_total
+
+def choose_delivery_option():
+    delivery_option = input("Choose delivery option (1. Standard, 2. Express): ")
+    delivery_cost = 0
+
+    if delivery_option == '1':
+        delivery_cost = 49  # Standard delivery cost
+    elif delivery_option == '2':
+        delivery_cost = 79  # Express delivery cost
+    else:
+        print("Invalid delivery option. Using standard delivery.")
+
+    return delivery_cost
+
 def place_order(user):
     display_menu()
     item_id = int(input("Enter the item ID you want to order: "))
@@ -118,6 +106,16 @@ def place_order(user):
         order = Order(user, item, quantity)
         orders.append(order)
         print(f"{quantity} {item.name}(s) added to your order.")
+        
+        # Add payment processing
+        payment_option = input("Do you want to proceed with payment? (y/n): ").lower()
+        if payment_option == 'y':
+            payment_processor = Payment()
+            total_amount = order.item.price * order.quantity
+            order.transaction_id = payment_processor.process_payment(total_amount)
+            print("Payment processed successfully.")
+        else:
+            print("Order placed. Payment pending.")
     else:
         print("Invalid item ID. Please try again.")
 
@@ -127,25 +125,22 @@ def display_order(user):
     if not user_orders:
         print("You have no orders.")
         return
-
+    
     total_amount = sum(order.item.price * order.quantity for order in user_orders)
     total_amount = apply_discount(total_amount)
     delivery_cost = choose_delivery_option()
     total_amount += delivery_cost
-
+    
     print("Your Order:")
     for order in user_orders:
         print(f"{order.quantity} {order.item.name}(s) - Rs.{order.item.price * order.quantity:.2f}")
-
+    
     print(f"Delivery Cost: Rs.{delivery_cost:.2f}")
     print(f"Total Amount: Rs.{total_amount:.2f}")
-
-    payment_choice = input("Would you like to proceed with payment? (y/n): ")
-    if payment_choice.lower() == 'y':
-        for order in user_orders:
-            order.make_payment()
+    if all(order.transaction_id for order in user_orders):
+        print(f"Payment Successful. Transaction ID: {order.transaction_id}")
     else:
-        print("Order not completed. You can make a payment later.")
+        print("Payment Pending.")
 
 def display_order_history(user):
     user_orders = [order for order in orders if order.user == user]
@@ -178,7 +173,7 @@ def main():
             if user:
                 print(f"Welcome, {user.username}!")
                 while True:
-                    print("\n1. Display Menu\n2. Place Order\n3. Display Current Order\n4. Order History\n5. Track Order\n6. Leave Review\n7. Make Payment\n8. Log Out")
+                    print("\n1. Display Menu\n2. Place Order\n3. Display Current Order\n4. Order History\n5. Track Order\n6. Leave Review\n7. Log Out")
                     user_choice = input("Enter your choice: ")
 
                     if user_choice == '1':
@@ -199,8 +194,6 @@ def main():
                         else:
                             print("Invalid item ID. Please try again.")
                     elif user_choice == '7':
-                        display_order(user)
-                    elif user_choice == '8':
                         print(f"Goodbye, {user.username}!")
                         break
                     else:
@@ -222,5 +215,5 @@ def main():
         else:
             print("Invalid choice. Please try again.")
 
-if __name__ == "_main_":
+if __name__ == "__main__":
     main()
